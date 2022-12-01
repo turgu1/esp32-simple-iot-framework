@@ -1,0 +1,20 @@
+{
+    "name": "ESP32SimpleIOT",
+    "version": "0.3.0",
+    "description": "A Simplet ESP32 IoT framework based on ESP-IDF.",
+    "keywords": "esp32, iot, framework",
+    "authors":
+    [
+      {
+        "name": "Guy Turcotte",
+        "email": "turgu666@gmail.com",
+        "url": "https://github.com/turgu1"
+      }
+    ],
+    "license": "MIT",
+    "homepage": "https://www.helloworld.org/",
+    "dependencies": {
+    },
+    "frameworks": "espidf",
+    "platforms": "espressif32"
+  }
