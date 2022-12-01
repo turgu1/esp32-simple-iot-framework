@@ -1,3 +1,5 @@
+#include <esp_sleep.h>
+
 #include "iot.hpp"
 
 RTC_NOINIT_ATTR IoT::State state;
@@ -76,7 +78,7 @@ void IoT::process()
   UserResult user_result;
   if (process_handler != nullptr) user_result = process_handler(state);
   
-  switch state {
+  switch (state) {
     case State::STARTUP:
       break;
 
