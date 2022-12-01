@@ -1,5 +1,7 @@
 #include "iot.hpp"
 
+RTC_NOINIT_ATTR IoT::State state;
+
 esp_err_t IoT::init(ProcessHandler * handler)
 {
   esp_log_level_set(TAG, CONFIG_IOT_LOG_LEVEL);
@@ -60,5 +62,22 @@ esp_err_t IoT::prepare_for_deep_sleep()
 
 void IoT::process()
 {
+  esp_reset_reason_t reason = esp_reset_reason();
 
+  if (reason == ESP_RST_DEEPSLEEP) {
+    if (esp_sleep_get_wakeup_cause() != ESP_SLEEP_WAKEUP_TIMER) {
+      if (!(state & (State::PROCESS_EVENT | State::WAIT_END_EVENT))) state = State::PROCESS_EVENT;
+    }
+  }
+  else {
+    state = STARTUP;
+  }
+
+  switch state {
+    case State::STARTUP:
+      break;
+
+    case State::HOURS_24:
+      break;
+  }
 }
