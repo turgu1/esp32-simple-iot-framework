@@ -73,6 +73,9 @@ void IoT::process()
     state = STARTUP;
   }
 
+  UserResult user_result;
+  if (process_handler != nullptr) user_result = process_handler(state);
+  
   switch state {
     case State::STARTUP:
       break;
