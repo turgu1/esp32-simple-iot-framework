@@ -1,4 +1,4 @@
-menu "ESP32 Simple IOT Library"
+menu "ESP32 Simple IOT Framework"
 
     choice
         prompt "Log Level"
