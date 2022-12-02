@@ -57,7 +57,8 @@ class IoT
       NOT_COMPLETED, ///< The current state still require some processing in calls to come
       ABORTED,       ///< The event vanished and requires no more processing (in a *PROCESS_EVENT* state)
       NEW_EVENT,     ///< A new event occurred (in a *WAIT_FOR_EVENT* state)
-      RETRY          ///< From WAIT_END_EVENT, go back to PROCESS_EVENT
+      RETRY,         ///< From WAIT_END_EVENT, go back to PROCESS_EVENT
+      UNKNOWN
     };
 
     /// Application defined process handling function. To be supplied as a parameter

@@ -3,12 +3,19 @@
 #include "iot.hpp"
 
 RTC_NOINIT_ATTR IoT::State state;
+RTC_NOINIT_ATTR IoT::State return_state;
 
 esp_err_t IoT::init(ProcessHandler * handler)
 {
   esp_log_level_set(TAG, CONFIG_IOT_LOG_LEVEL);
 
   process_handler = handler;
+
+  esp_reset_reason_t reason = esp_reset_reason();
+
+  if (reason != ESP_RST_DEEPSLEEP) {
+    state = return_state = STARTUP;
+  }
 
   ESP_ERROR_CHECK(nvs_mgr.init());
   ESP_ERROR_CHECK(esp_event_loop_create_default());
@@ -71,18 +78,71 @@ void IoT::process()
       if (!(state & (State::PROCESS_EVENT | State::WAIT_END_EVENT))) state = State::PROCESS_EVENT;
     }
   }
-  else {
-    state = STARTUP;
-  }
 
-  UserResult user_result;
+  UserResult user_result = UserResult::UNKNOWN;
   if (process_handler != nullptr) user_result = process_handler(state);
   
+  State new_state = state;
+  State new_return_state = return_state;
+
   switch (state) {
     case State::STARTUP:
+      send_state_msg("STARTUP");
+      if (user_result != NOT_COMPLETED) {
+        new_state        = WAIT_FOR_EVENT;
+        new_return_state = WAIT_FOR_EVENT;
+      }
       break;
 
     case State::HOURS_24:
+      if (watchdog_enabled()) {
+        send_state_msg("WATCHDOG");
+      }
+
+      new_state = new_return_state;
+      break;
+
+    case State::WAIT_FOR_EVENT:
+      if (user_result == NEW_EVENT) {
+        new_state        = PROCESS_EVENT;
+        new_return_state = PROCESS_EVENT;
+      }
+      else {
+        new_return_state = WAIT_FOR_EVENT;
+        new_state        = check_if_24_hours_time(WAIT_FOR_EVENT);
+      }
+      break;
+
+    case State::PROCESS_EVENT:
+     if (user_result == ABORTED) {
+        new_state = new_return_state = WAIT_FOR_EVENT;
+      }
+      else if (user_result != NOT_COMPLETED) {
+        new_state = new_return_state = WAIT_END_EVENT;
+      }
+      else {
+        new_return_state = PROCESS_EVENT;
+        new_state        = check_if_24_hours_time(PROCESS_EVENT);
+      }
+       break;
+
+    case State::WAIT_END_EVENT:
+      if (user_result == RETRY) {
+        new_state = new_return_state = PROCESS_EVENT;
+      }
+      else if (user_result != NOT_COMPLETED) {
+        new_state = new_return_state = END_EVENT;
+      }
+      else {
+        new_return_state = WAIT_END_EVENT;
+        new_state        = check_if_24_hours_time(WAIT_END_EVENT);
+      }
+      break;
+
+    case State::END_EVENT:
+      if (user_result != NOT_COMPLETED) {
+        new_state = new_return_state = WAIT_FOR_EVENT;
+      }
       break;
   }
 }
