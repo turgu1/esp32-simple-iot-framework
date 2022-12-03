@@ -18,19 +18,23 @@
 RTC_NOINIT_ATTR IoT::State state;
 RTC_NOINIT_ATTR IoT::State return_state;
 RTC_NOINIT_ATTR time_t     next_watchdog_time;
+RTC_NOINIT_ATTR uint32_t   error_count;
+
+QueueHandle_t IoT::send_queue_handle = nullptr;
 
 esp_err_t IoT::init(ProcessHandler * handler)
 {
   esp_log_level_set(TAG, CONFIG_IOT_LOG_LEVEL);
 
-  process_handler = handler;
-
+  process_handler           = handler;
+  deep_sleep_duration       = 0;
   esp_reset_reason_t reason = esp_reset_reason();
 
   if (reason != ESP_RST_DEEPSLEEP) {
-    time_t now;
+    time_t now = time(&now);
     state = return_state = STARTUP;
-    next_watchdog_time = time(&now) + (60*60*24);
+    next_watchdog_time   = now + (60*60*24);
+    error_count          = 0;
   }
 
   ESP_ERROR_CHECK(nvs_mgr.init());
@@ -61,6 +65,7 @@ esp_err_t IoT::init(ProcessHandler * handler)
   #ifdef CONFIG_IOT_ENABLE_ESP_NOW
     // EspNow initialization
     ESP_ERROR_CHECK(esp_now.init());
+    send_queue_handle = esp_now.get_send_queue_handle();
   #endif
 
   return ESP_OK;
@@ -94,11 +99,16 @@ IoT::State IoT::check_if_24_hours_time(State the_state)
   return the_state;
 }
 
+/// Send a message to the gateway. May not return if the message cannot
+/// be sent (gateway is dead for any reason). The underneath protocol
+/// (udp or esp_now) will start a deep_sleep if not able to send the message.
+/// At next boot, the current state will be done again to try to send again
+/// something if there is still something to be sent.
 void IoT::send_msg(const char * msg_type, const char * other_field)
 {
-  static char pkt[200];
+  static char pkt[248];
 
-  sprintf(pkt, 
+  snprintf(pkt, 247,
     "%s;{type:%s,mac:\"%s\",rssi:%d,state:%d,return_state:%d,heap:%d%s%s"
     #ifdef CONFIG_IOT_BATTERY_LEVEL
       ",vbat:%f"
@@ -128,6 +138,18 @@ void IoT::send_msg(const char * msg_type, const char * other_field)
   #endif
   #ifdef CONFIG_IOT_ENABLE_ESP_NOW
     esp_now.send((uint8_t *) pkt, strlen(pkt));
+    ESPNow::SendEvent evt;
+    if (send_queue_handle != nullptr) {
+      if (xQueueReceive(send_handle, &evt, pdMS_TO_TICKS(200)) != pdTRUE) {
+        ESP_LOGE(TAG, "No answer after packet sent.");
+        error_count++;
+      }
+      else {
+        if (evt.status == ESP_OK) {
+          ESP_LOGD(TAG, "Packet transmitted:");
+        }
+      }
+    }
   #endif
 }
 
@@ -202,4 +224,20 @@ void IoT::process()
 
   state        = new_state;
   return_state = new_return_state;
+
+  if ((state & (PROCESS_EVENT|END_EVENT|HOURS_24)) == 0) {
+    if (deep_sleep_duration >= 0) {
+      if (deep_sleep_duration == 0) {
+        time_t now = time(&now);
+        if ((next_watchdog_time - now) > 0) {
+          prepare_for_deep_sleep();
+          esp_deep_sleep(((uint64_t)(next_watchdog_time - now)) * 1e6);
+        }
+      }
+      else {
+        prepare_for_deep_sleep();
+        esp_deep_sleep(((uint64_t) deep_sleep_duration) * 1e6);
+      }
+    }
+  }
 }

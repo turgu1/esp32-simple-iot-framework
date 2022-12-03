@@ -7,6 +7,8 @@
 
 #undef __IOT__
 
+extern uint32_t error_count;
+
 class IoT
 {
   public:
@@ -58,7 +60,6 @@ class IoT
       ABORTED,       ///< The event vanished and requires no more processing (in a *PROCESS_EVENT* state)
       NEW_EVENT,     ///< A new event occurred (in a *WAIT_FOR_EVENT* state)
       RETRY,         ///< From WAIT_END_EVENT, go back to PROCESS_EVENT
-      UNKNOWN
     };
 
     /// Application defined process handling function. To be supplied as a parameter
@@ -71,13 +72,34 @@ class IoT
   private:
     static constexpr char const * TAG = "IoT Class";
 
+    static QueueHandle_t send_queue_handle;
     ProcessHandler * process_handler;
+
+    
+    /// @brief Deep Sleep Duration bypass
+    ///
+    /// The **deep_sleep_duration** variable is used to bypass the default 
+    /// deep sleep duration that is based on the need to send a watchdog
+    /// message every 24 hours.
+    ///
+    /// The values can be:
+    ///
+    /// -1 : Deep Sleep is disabled
+    ///  0 : Use the default duration for the watchdog transmission
+    /// >0 : Deep sleep for the number of seconds identified
+    ///
+    /// Every time the process method is run, the deep_sleep_duration
+    /// is resetted to its default value of 0.
+    ///
+    int32_t          deep_sleep_duration;
 
     State check_if_24_hours_time(State the_state);
 
   public:
-    esp_err_t                   init(ProcessHandler * handler);
-    void                     process();
-    void                    send_msg(const char * msg_type, const char * other_field = nullptr);
-    esp_err_t prepare_for_deep_sleep();
+    esp_err_t                     init(ProcessHandler * handler);
+    void                       process();
+    void                      send_msg(const char * msg_type, const char * other_field = nullptr);
+    void       set_deep_sleep_duration(int32_t seconds);
+    inline void  increment_error_count() { error_count += 1; }
+    esp_err_t   prepare_for_deep_sleep();
 };

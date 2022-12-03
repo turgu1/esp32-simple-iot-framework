@@ -19,8 +19,8 @@
 
 #undef __ESP_NOW__
 
-RTC_NOINIT_ATTR uint32_t gateway_access_error_count;
 RTC_NOINIT_ATTR bool     ap_failed;
+RTC_NOINIT_ATTR uint32_t gateway_access_error_count;
 
 bool              ESPNow::abort             = false;
 QueueHandle_t     ESPNow::send_queue_handle = nullptr;
@@ -169,11 +169,13 @@ esp_err_t ESPNow::search_ap()
   }
 
   gateway_access_error_count++;
+  iot.increment_error_count();
   ap_failed = true;
   int wait_time = pow(gateway_access_error_count, 4) * 10;
   if (wait_time > 86400) wait_time = 86400; // Don't wait for more than one day.
   ESP_LOGE(TAG, "Unable to find Gateway Access Point. Waiting for %d seconds...", wait_time);
 
+  iot.prepare_for_deep_sleep();
   esp_deep_sleep(wait_time * 1e6);
 
   return ESP_FAIL;
