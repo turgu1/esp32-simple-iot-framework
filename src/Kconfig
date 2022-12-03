@@ -26,6 +26,14 @@ menu "ESP32 Simple IOT Framework"
         help
             Enter the topic name that will be used by the gateway to
             generate the complete topic name to be sent to the MQTT broker.
+    
+    config IOT_BATTERY_LEVEL
+        bool "Enable battery voltage level retrieval"
+        default "n"
+        help
+            If enabled, the battery voltage level will be retrieved using the
+            Battery class. The code may require some adjustments depending on
+            the electronics.
             
     choice
         prompt "Transmission Protocol"

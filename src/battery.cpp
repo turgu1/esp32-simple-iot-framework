@@ -10,7 +10,7 @@ esp_err_t Battery::init()
   return ESP_OK;
 }
 
-double Battery::read_level()
+double Battery::read_voltage_level()
 {
   esp_adc_cal_characteristics_t adc1_chars;
 

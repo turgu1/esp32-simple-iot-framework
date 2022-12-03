@@ -66,15 +66,18 @@ class IoT
     /// @param[in] _state The current state of the Finite State Machine.
     /// @return The status of the user process execution.  private:
 
-    typedef UserResult ProcessHandler(State _state);
+    typedef UserResult ProcessHandler(State state);
 
   private:
     static constexpr char const * TAG = "IoT Class";
 
     ProcessHandler * process_handler;
 
+    State check_if_24_hours_time(State the_state);
+
   public:
     esp_err_t                   init(ProcessHandler * handler);
     void                     process();
+    void                    send_msg(const char * msg_type, const char * other_field = nullptr);
     esp_err_t prepare_for_deep_sleep();
 };

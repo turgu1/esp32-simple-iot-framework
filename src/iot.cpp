@@ -1,9 +1,23 @@
 #include <esp_sleep.h>
+#include <time.h>
 
 #include "iot.hpp"
 
+#if CONFIG_IOT_ESPNOW_ENABLE_LONG_RANGE
+  #pragma message "----> INFO: IOT WIFI LONG RANGE ENABLED <----"
+#else
+  #pragma message "----> INFO: IOT WIFI LONG RANGE DISABLED <----"
+#endif
+
+#if CONFIG_IOT_BATTERY_LEVEL
+  #pragma message "----> INFO: IOT BATTERY LEVEL ENABLED <----"
+#else
+  #pragma message "----> INFO: IOT BATTERY LEVEL DISABLED <----"
+#endif
+
 RTC_NOINIT_ATTR IoT::State state;
 RTC_NOINIT_ATTR IoT::State return_state;
+RTC_NOINIT_ATTR time_t     next_watchdog_time;
 
 esp_err_t IoT::init(ProcessHandler * handler)
 {
@@ -14,7 +28,9 @@ esp_err_t IoT::init(ProcessHandler * handler)
   esp_reset_reason_t reason = esp_reset_reason();
 
   if (reason != ESP_RST_DEEPSLEEP) {
+    time_t now;
     state = return_state = STARTUP;
+    next_watchdog_time = time(&now) + (60*60*24);
   }
 
   ESP_ERROR_CHECK(nvs_mgr.init());
@@ -69,17 +85,55 @@ esp_err_t IoT::prepare_for_deep_sleep()
   return ESP_OK;
 }
 
+IoT::State IoT::check_if_24_hours_time(State the_state)
+{
+  time_t now;
+
+  time(&now);
+  if (now > next_watchdog_time) return State::HOURS_24;
+  return the_state;
+}
+
+void IoT::send_msg(const char * msg_type, const char * other_field)
+{
+  static char pkt[200];
+
+  sprintf(pkt, 
+    "%s;{type:%s,mac:\"%s\",rssi:%d,state:%d,return_state:%d,heap:%d%s%s"
+    #ifdef CONFIG_IOT_BATTERY_LEVEL
+      ",vbat:%f"
+    #endif
+    #ifdef CONFIG_IOT_ENABLE_UDP
+      ",ip:\"%s\""
+    #endif
+    "}",
+    CONFIG_IOT_TOPIC_NAME,
+    msg_type,
+    wifi.get_mac_cstr(),
+    wifi.get_rssi(),
+    state, return_state,
+    esp_get_free_heap_size(),
+    other_field == nullptr ? "" : ",",
+    other_field == nullptr ? "" : other_field
+    #ifdef CONFIG_IOT_BATTERY_LEVEL
+      , battery.read_voltage_level()
+    #endif
+    #ifdef CONFIG_IOT_ENABLE_UDP
+      , wifi.get_ip_cstr()
+    #endif
+  );
+
+  #ifdef CONFIG_IOT_ENABLE_UDP
+    udp.send((uint8_t *) pkt, strlen(pkt));
+  #endif
+  #ifdef CONFIG_IOT_ENABLE_ESP_NOW
+    esp_now.send((uint8_t *) pkt, strlen(pkt));
+  #endif
+}
+
 void IoT::process()
 {
-  esp_reset_reason_t reason = esp_reset_reason();
-
-  if (reason == ESP_RST_DEEPSLEEP) {
-    if (esp_sleep_get_wakeup_cause() != ESP_SLEEP_WAKEUP_TIMER) {
-      if (!(state & (State::PROCESS_EVENT | State::WAIT_END_EVENT))) state = State::PROCESS_EVENT;
-    }
-  }
-
-  UserResult user_result = UserResult::UNKNOWN;
+  UserResult user_result = UserResult::COMPLETED;
   if (process_handler != nullptr) user_result = process_handler(state);
   
   State new_state = state;
@@ -87,19 +141,19 @@ void IoT::process()
 
   switch (state) {
     case State::STARTUP:
-      send_state_msg("STARTUP");
+      send_msg("STARTUP");
       if (user_result != NOT_COMPLETED) {
         new_state        = WAIT_FOR_EVENT;
         new_return_state = WAIT_FOR_EVENT;
       }
       break;
 
-    case State::HOURS_24:
-      if (watchdog_enabled()) {
-        send_state_msg("WATCHDOG");
+    case State::HOURS_24: {
+        send_msg("WATCHDOG");
+        time_t now;
+        next_watchdog_time = time(&now) + (60*60*24);
+        new_state = new_return_state;
       }
-
-      new_state = new_return_state;
       break;
 
     case State::WAIT_FOR_EVENT:
@@ -145,4 +199,7 @@ void IoT::process()
       }
       break;
   }
+
+  state        = new_state;
+  return_state = new_return_state;
 }

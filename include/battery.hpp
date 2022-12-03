@@ -18,7 +18,7 @@ class Battery
     
   public:
     esp_err_t                   init();
-    double                read_level();
+    double        read_voltage_level();
     esp_err_t prepare_for_deep_sleep();
 };
 
