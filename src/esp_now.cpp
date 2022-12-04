@@ -41,14 +41,13 @@ esp_err_t ESPNow::init()
   // Retrieve AP info from nvs and check reset type
 
   nvs_mgr.get_nvs_data();
-  esp_reset_reason_t reason = esp_reset_reason();
 
-  if (reason != ESP_RST_DEEPSLEEP) {
+  if (iot.was_reset()) {
     gateway_access_error_count = 0;
     ap_failed = false;
   }
 
-  if (!((reason == ESP_RST_DEEPSLEEP) && nvs_mgr.is_data_valid() && !ap_failed)) {
+  if (!(nvs_mgr.is_data_valid() && !ap_failed && !iot.was_reset())) {
     ESP_ERROR_CHECK(search_ap());
     NVSMgr::NVSData nvs_data;
     memcpy(&nvs_data.gateway_mac_addr, &ap_mac_addr, 6);

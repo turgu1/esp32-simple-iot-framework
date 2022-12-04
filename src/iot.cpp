@@ -1,4 +1,3 @@
-#include <esp_sleep.h>
 #include <time.h>
 
 #include "iot.hpp"
@@ -20,8 +19,6 @@ RTC_NOINIT_ATTR IoT::State return_state;
 RTC_NOINIT_ATTR time_t     next_watchdog_time;
 RTC_NOINIT_ATTR uint32_t   error_count;
 
-QueueHandle_t IoT::send_queue_handle = nullptr;
-
 esp_err_t IoT::init(ProcessHandler * handler)
 {
   esp_log_level_set(TAG, CONFIG_IOT_LOG_LEVEL);
@@ -31,10 +28,15 @@ esp_err_t IoT::init(ProcessHandler * handler)
   esp_reset_reason_t reason = esp_reset_reason();
 
   if (reason != ESP_RST_DEEPSLEEP) {
+    restart_reason = RestartReason::RESET;
     time_t now = time(&now);
     state = return_state = STARTUP;
     next_watchdog_time   = now + (60*60*24);
     error_count          = 0;
+  }
+  else {
+    restart_reason = RestartReason::DEEP_SLEEP_AWAKE;
+    deep_sleep_wakeup_reason = esp_sleep_get_wakeup_cause();
   }
 
   ESP_ERROR_CHECK(nvs_mgr.init());
@@ -140,7 +142,7 @@ void IoT::send_msg(const char * msg_type, const char * other_field)
     esp_now.send((uint8_t *) pkt, strlen(pkt));
     ESPNow::SendEvent evt;
     if (send_queue_handle != nullptr) {
-      if (xQueueReceive(send_handle, &evt, pdMS_TO_TICKS(200)) != pdTRUE) {
+      if (xQueueReceive(send_queue_handle, &evt, pdMS_TO_TICKS(200)) != pdTRUE) {
         ESP_LOGE(TAG, "No answer after packet sent.");
         error_count++;
       }

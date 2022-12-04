@@ -20,5 +20,3 @@ NVSMgr nvs_mgr;
 #endif
 
 RTC_NOINIT_ATTR uint32_t sequence_number;
-RTC_NOINIT_ATTR uint32_t error_count;
-

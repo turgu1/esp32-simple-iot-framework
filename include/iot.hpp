@@ -1,5 +1,7 @@
 #pragma once
 
+#include <esp_sleep.h>
+
 #include "config.hpp"
 
 #define __IOT__
@@ -62,6 +64,16 @@ class IoT
       RETRY,         ///< From WAIT_END_EVENT, go back to PROCESS_EVENT
     };
 
+    enum RestartReason : uint8_t {
+      RESET,
+      DEEP_SLEEP_AWAKE
+    };
+
+    enum DeepSleepAwakeReason : uint8_t {
+      TIMEOUT,
+      OTHER
+    };
+
     /// Application defined process handling function. To be supplied as a parameter
     /// to the IOT::init() function.
     /// @param[in] _state The current state of the Finite State Machine.
@@ -72,9 +84,11 @@ class IoT
   private:
     static constexpr char const * TAG = "IoT Class";
 
-    static QueueHandle_t send_queue_handle;
+    QueueHandle_t send_queue_handle;
     ProcessHandler * process_handler;
 
+    RestartReason      restart_reason;
+    esp_sleep_source_t deep_sleep_wakeup_reason;
     
     /// @brief Deep Sleep Duration bypass
     ///
@@ -101,5 +115,7 @@ class IoT
     void                      send_msg(const char * msg_type, const char * other_field = nullptr);
     void       set_deep_sleep_duration(int32_t seconds);
     inline void  increment_error_count() { error_count += 1; }
+    inline bool              was_reset() { return restart_reason == RestartReason::RESET; }
+    inline bool was_deep_sleep_timeout() { return deep_sleep_wakeup_reason == ESP_SLEEP_WAKEUP_TIMER; }
     esp_err_t   prepare_for_deep_sleep();
 };

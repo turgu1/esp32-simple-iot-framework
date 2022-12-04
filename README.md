@@ -6,6 +6,41 @@
 
 This is a simple ESP32 Internet of Things framework.
 
+Note: This is still work in progress. The documentation is also a work in progress. The code is working and must be considered of a Beta level.
+
+This library implements a small, minimally secure, IOT Framework for embedded ESP32 devices to serve into a Home IOT environment. It diminishes the amount of code to be put in the targeted application source code. The application interacts with the framework through a Finite State Machine algorithm allowing for specific usage at every stage.
+
+Here are the main characteristics:
+
+    Framework configuration saved in file through SPIFFS.
+    WiFi MQTT based communications. Nothing else.
+    TLS encryption: All MQTT communication with encryption.
+    Server authentication through fingerprinting.
+    User/Password identification.
+    JSON based data transmission with server.
+    Configuration updates through MQTT.
+    Option: OTA over MQTT.
+    Option: Automated Watchdog transmission every 24 hours.
+    Option: Battery voltage transmission.
+    Option: DeepSleep or continuous power.
+    Option: Application specific MQTT topic subscription.
+    Option: Application specific automatic state saving in RTC memory.
+    Option: Verbose/Silent debugging output through compilation.
+
+The MQTT based transmission architecture is specific to this implementation and is describe below.
+
+The framework is to be used with the PlarformIO ecosystem. Some examples can be found in the examples folder and shall be compiled through PlatformIO.
+
+Note that the library maybe usable through the Arduino IDE, but this is not supported. It is known to be a challenge to set compiling options and access Maison defined types from .ino source code.
+
+The Maison framework, to be functional, requires the following:
+
+    Proper application setup parameters in file platformio.ini. Look at the Building an Application section;
+    Code in the user application to setup and use the framework. Look at the Code Usage section;
+    Configuration parameters located in SPIFFS (file data/config.json in example folders). Look at the Configuration Parameters section.
+
+The sections below describe the specific of these requirements.
+
 [To be completed]
 
 ### Configuration
