@@ -6,9 +6,23 @@
 
 This is a simple ESP32 Internet of Things framework.
 
-This library implements a small, minimally secure, IOT Framework for embedded ESP32 devices to serve into a Home IOT environment. It diminishes the amount of code to be put in the targeted application source code. The application interacts with the framework through a Finite State Machine algorithm allowing for specific usage at every stage.
+This library implements a small, minimally secure, IOT Framework for embedded ESP32 devices to serve into a Home IOT environment. It diminishes the amount of code to be put in the targeted application source code. The application interacts with the framework through a Finite State Machine allowing for specific usage at every stage.
+
+This framework requires the use of a **ESP32 Gateway** using the software v0.3.0 available [here](https://github.com/turgu1/esp32-gateway).
 
 The framework is to be used with the PlarformIO ecosystem. Some examples can be found in the examples folder and shall be compiled through PlatformIO.
+
+The following is the current state of items being developped:
+
+[x] ESP-NOW and UDP packets transmission to the ESP-32 Gateway
+[x] ESP-NOW encryption
+[x] ESP-NOW packet delivery verification
+[ ] UDP encryption
+[ ] UDP packet delivery verification
+[ ] MQTT delivery
+[ ] MQTT TLS encryption
+[ ] ESP-NOW and UDP packets reception from the ESP-32 Gateway
+[ ] OTA support for all protocols (UDP, ESP-NOW and MQTT)
 
 [To be completed]
 
