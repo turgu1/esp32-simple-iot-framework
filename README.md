@@ -14,15 +14,15 @@ The framework is to be used with the PlarformIO ecosystem. Some examples can be 
 
 The following is the current state of items being developped:
 
-[x] ESP-NOW and UDP packets transmission to the ESP-32 Gateway
-[x] ESP-NOW encryption
-[x] ESP-NOW packet delivery verification
-[ ] UDP encryption
-[ ] UDP packet delivery verification
-[ ] MQTT delivery
-[ ] MQTT TLS encryption
-[ ] ESP-NOW and UDP packets reception from the ESP-32 Gateway
-[ ] OTA support for all protocols (UDP, ESP-NOW and MQTT)
+- [x] ESP-NOW and UDP packets transmission to the ESP-32 Gateway
+- [x] ESP-NOW encryption
+- [x] ESP-NOW packet delivery verification
+- [ ] UDP encryption
+- [ ] UDP packet delivery verification
+- [ ] MQTT delivery
+- [ ] MQTT TLS encryption
+- [ ] ESP-NOW and UDP packets reception from the ESP-32 Gateway
+- [ ] OTA support for all protocols (UDP, ESP-NOW and MQTT)
 
 [To be completed]
 
