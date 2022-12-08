@@ -31,7 +31,7 @@ esp_err_t IoT::init(ProcessHandler * handler)
     restart_reason = RestartReason::RESET;
     time_t now = time(&now);
     state = return_state = STARTUP;
-    next_watchdog_time   = now + (60*60*24);
+    next_watchdog_time   = now + CONFIG_IOT_WATCHDOG_INTERVAL;
     error_count          = 0;
   }
   else {
@@ -97,7 +97,7 @@ IoT::State IoT::check_if_24_hours_time(State the_state)
   time_t now;
 
   time(&now);
-  if (now > next_watchdog_time) return State::HOURS_24;
+  if (now > next_watchdog_time) return State::WATCHDOG;
   return the_state;
 }
 
@@ -111,7 +111,7 @@ void IoT::send_msg(const char * msg_type, const char * other_field)
   static char pkt[248];
 
   snprintf(pkt, 247,
-    "%s;{type:%s,mac:\"%s\",rssi:%d,state:%d,return_state:%d,heap:%d%s%s"
+    "%s;{type:%s,mac:\"%s\",errcnt:%d,rssi:%d,state:%d,return_state:%d,heap:%d%s%s"
     #ifdef CONFIG_IOT_BATTERY_LEVEL
       ",vbat:%f"
     #endif
@@ -122,6 +122,7 @@ void IoT::send_msg(const char * msg_type, const char * other_field)
     CONFIG_IOT_TOPIC_NAME,
     msg_type,
     wifi.get_mac_cstr(),
+    error_count,
     wifi.get_rssi(),
     state, return_state,
     esp_get_free_heap_size(),
@@ -172,10 +173,10 @@ void IoT::process()
       }
       break;
 
-    case State::HOURS_24: {
+    case State::WATCHDOG: {
         send_msg("WATCHDOG");
         time_t now;
-        next_watchdog_time = time(&now) + (60*60*24);
+        next_watchdog_time = time(&now) + CONFIG_IOT_WATCHDOG_INTERVAL;
         new_state = new_return_state;
       }
       break;
@@ -227,7 +228,7 @@ void IoT::process()
   state        = new_state;
   return_state = new_return_state;
 
-  if ((state & (PROCESS_EVENT|END_EVENT|HOURS_24)) == 0) {
+  if ((state & (PROCESS_EVENT|END_EVENT|WATCHDOG)) == 0) {
     if (deep_sleep_duration >= 0) {
       if (deep_sleep_duration == 0) {
         time_t now = time(&now);
@@ -238,7 +239,7 @@ void IoT::process()
       }
       else {
         prepare_for_deep_sleep();
-        esp_deep_sleep(((uint64_t) deep_sleep_duration) * 1e6);
+        esp_deep_sleep(((uint64_t) CONFIG_IOT_WATCHDOG_INTERVAL) * 1e6);
       }
     }
   }

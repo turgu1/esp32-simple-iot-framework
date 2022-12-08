@@ -10,13 +10,13 @@ static IoT::UserResult iot_handler(IoT::State state)
 
   switch (state) {
     case IoT::State::STARTUP:
-      result = IoT::UserResult::NOT_COMPLETED;
+      result = IoT::UserResult::COMPLETED;
       break;
     case IoT::State::WAIT_FOR_EVENT:
       result = IoT::UserResult::NOT_COMPLETED;
       break;
     case IoT::State::PROCESS_EVENT:
-      result = IoT::UserResult::ABORTED;
+      result = IoT::UserResult::COMPLETED;
       break;
     case IoT::State::WAIT_END_EVENT:
       result = IoT::UserResult::COMPLETED;

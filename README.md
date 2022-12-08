@@ -22,6 +22,8 @@ The following is the current state of items being developped:
 - [ ] MQTT delivery
 - [ ] MQTT TLS encryption
 - [ ] ESP-NOW and UDP packets reception from the ESP-32 Gateway
+- [ ] Some configuration parameters update through specific packet reception
+- [ ] Device reset / restart / status requests through specific packet reception
 - [ ] OTA support for all protocols (UDP, ESP-NOW and MQTT)
 
 [To be completed]
@@ -37,6 +39,7 @@ Here is the list of the configuration items:
 - **Log Level**: Max log level used by the framework to report various log information on the USB port. The ESP-IDF maximum log level may require to be adjusted according to this item. It can be found in menuconfig at the following location: `Component config → Log output → Maximum log verbosity`.
 - **MQTT Topic Name**: The topic name that will be used by the gateway to generate the topic to be sent to the MQTT broker.
 - **Transmission Protocol**: The protocol to be used to transmit packets to the ESP32 Gateway. One of **UDP** or **ESP-NOW**.
+- **Interval (in seconds) between Watchdog packet transmission**: The IoT framework is sending a Watchdog packet at the specified interval to signify that the device is still alive. 86400 seconds is one day.
 
 For the UDP Protocol:
 - **UDP Port**: The UDP Port to be used by the exerciser to transmit packets to the gateway.

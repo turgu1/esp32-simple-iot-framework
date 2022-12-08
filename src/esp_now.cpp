@@ -140,12 +140,14 @@ esp_err_t ESPNow::search_ap()
   ESP_LOGD(TAG, "Scanning AP list to find SSID starting with [%s]...", CONFIG_IOT_APSSID_PREFIX);
 
   memset(&config, 0, sizeof(wifi_scan_config_t));
-  config.channel = CONFIG_IOT_CHANNEL;
+  config.channel   = CONFIG_IOT_CHANNEL;
   config.scan_type = WIFI_SCAN_TYPE_ACTIVE;
 
   ESP_ERROR_CHECK(esp_wifi_scan_start(&config, true));
   ESP_ERROR_CHECK(esp_wifi_scan_get_ap_num(&count));
 
+  ESP_LOGD(TAG, "Number of SSID found: %d", count);
+  
   ap_records = (wifi_ap_record_t *) malloc(sizeof(wifi_ap_record_t) * count);
   if (ap_records == nullptr) {
     ESP_LOGE(TAG, "Unable to allocate memory for ap_records.");
@@ -157,6 +159,7 @@ esp_err_t ESPNow::search_ap()
   int len = strlen(CONFIG_IOT_APSSID_PREFIX);
 
   for (int i = 0; i < count; i++) {
+    ESP_LOGD(TAG, "SSID -> %s ...", ap_records[i].ssid);
     if (strncmp((const char *) ap_records[i].ssid, CONFIG_IOT_APSSID_PREFIX, len) == 0) {
       memcpy(&ap_mac_addr, ap_records[i].bssid, sizeof(MacAddr)); 
       wifi.set_rssi(ap_records[i].rssi);

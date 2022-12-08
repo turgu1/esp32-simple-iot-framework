@@ -19,8 +19,12 @@ Wifi::Wifi(void)
 {
   esp_log_level_set(TAG, CONFIG_IOT_LOG_LEVEL);
 
-  #ifdef CONFIG_IOT_ENABLE_UDP
+  if (retrieve_mac() != ESP_OK) {
+    ESP_LOGE(TAG, "Unable to retrieve Mac Adress.");
     mac_addr_cstr[0] = 0;
+  }
+
+  #ifdef CONFIG_IOT_ENABLE_UDP
     wifi_init_cfg    = WIFI_INIT_CONFIG_DEFAULT();
     memset(&wifi_sta_cfg, 0, sizeof(wifi_config_t));
   #endif
@@ -213,13 +217,6 @@ esp_err_t Wifi::init()
     state = State::NOT_INITIALIZED;
 
     std::lock_guard<std::mutex> mutx_guard(mutex);
-
-    if (mac_addr_cstr[0] == 0) {
-      if (retrieve_mac() != ESP_OK) {
-        ESP_LOGE(TAG, "Unable to retrieve Mac Adress.");
-        return ESP_FAIL;
-      }
-    }
 
     ESP_ERROR_CHECK(esp_netif_init());
 

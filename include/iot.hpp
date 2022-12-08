@@ -19,7 +19,7 @@ class IoT
     /// On battery power (*DEEP_SLEEP* feature is set), only the following
     /// states will have networking capability:
     ///
-    ///    *STARTUP*, *PROCESS_EVENT*, *END_EVENT*, *HOURS_24*
+    ///    *STARTUP*, *PROCESS_EVENT*, *END_EVENT*, *WATCHDOG*
     ///
     /// @startuml{state_uml.png} "IOT State Diagram" width=5cm
     /// hide empty description
@@ -27,18 +27,18 @@ class IoT
     /// STARTUP --> WAIT_FOR_EVENT : COMPLETED
     /// STARTUP --> STARTUP : NOT-COMPLETED
     /// WAIT_FOR_EVENT -right-> PROCESS_EVENT : NEW_EVENT
-    /// WAIT_FOR_EVENT --> HOURS_24
-    /// HOURS_24 --> WAIT_FOR_EVENT
+    /// WAIT_FOR_EVENT --> WATCHDOG
+    /// WATCHDOG --> WAIT_FOR_EVENT
     /// PROCESS_EVENT --> WAIT_END_EVENT : COMPLETED
     /// PROCESS_EVENT --> PROCESS_EVENT : NOT_COMPLETED
     /// PROCESS_EVENT -left-> WAIT_FOR_EVENT : ABORTED
-    /// PROCESS_EVENT --> HOURS_24
-    /// HOURS_24 --> PROCESS_EVENT
+    /// PROCESS_EVENT --> WATCHDOG
+    /// WATCHDOG --> PROCESS_EVENT
     /// WAIT_END_EVENT --> END_EVENT : COMPLETED
     /// WAIT_END_EVENT --> PROCESS_EVENT : RETRY
-    /// WAIT_END_EVENT --> HOURS_24
+    /// WAIT_END_EVENT --> WATCHDOG
     /// WAIT_END_EVENT --> WAIT_END_EVENT : NOT_COMPLETED
-    /// HOURS_24 --> WAIT_END_EVENT
+    /// WATCHDOG --> WAIT_END_EVENT
     /// END_EVENT --> WAIT_FOR_EVENT : COMPLETED
     /// END_EVENT --> END_EVENT : NOT_COMPLETED
     /// @enduml
@@ -48,7 +48,7 @@ class IoT
       PROCESS_EVENT  =  4, ///< An event is being processed
       WAIT_END_EVENT =  8, ///< The device is waiting for the end of the event to occur
       END_EVENT      = 16, ///< The end of an event has been detected
-      HOURS_24       = 32  ///< This event occurs every 24 hours
+      WATCHDOG       = 32  ///< Transmit a watchdog packet
     };
 
     /// A UserResult is returned by the user process function to indicate

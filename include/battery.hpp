@@ -13,8 +13,8 @@ class Battery
   private:
     static constexpr char const * TAG = "Battery Class";
 
-    constexpr const gpio_num_t     VOLTAGE_ENABLE = GPIO_NUM_17;
-    constexpr const adc1_channel_t ADC            = ADC1_CHANNEL_0;
+    static constexpr const gpio_num_t     VOLTAGE_ENABLE = GPIO_NUM_17;
+    static constexpr const adc1_channel_t ADC            = ADC1_CHANNEL_0;
     
   public:
     esp_err_t                   init();

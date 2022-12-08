@@ -35,6 +35,14 @@ menu "ESP32 Simple IOT Framework"
             Battery class. The code may require some adjustments depending on
             the electronics.
             
+    config IOT_WATCHDOG_INTERVAL
+        int "Interval (in seconds) between Watchdog packet transmission."
+        default 86400
+        range 60 864000
+        help
+            The IoT framework is sending a Watchdog packet at the specified
+            interval to signify that the device is still alive. 86400 seconds 
+            is one day.
     choice
         prompt "Transmission Protocol"
         default IOT_ENABLE_ESP_NOW
