@@ -110,12 +110,12 @@ class IoT
     State check_if_24_hours_time(State the_state);
 
   public:
-    esp_err_t                     init(ProcessHandler * handler);
-    void                       process();
-    void                      send_msg(const char * msg_type, const char * other_field = nullptr);
-    void       set_deep_sleep_duration(int32_t seconds);
-    inline void  increment_error_count() { error_count += 1; }
-    inline bool              was_reset() { return restart_reason == RestartReason::RESET; }
-    inline bool was_deep_sleep_timeout() { return deep_sleep_wakeup_reason == ESP_SLEEP_WAKEUP_TIMER; }
-    esp_err_t   prepare_for_deep_sleep();
+    esp_err_t                      init(ProcessHandler * handler);
+    void                        process();
+    void                       send_msg(const char * msg_type, const char * other_field = nullptr);
+    inline void set_deep_sleep_duration(int32_t seconds) { deep_sleep_duration = seconds; }
+    inline void   increment_error_count() { error_count += 1; }
+    inline bool               was_reset() { return restart_reason == RestartReason::RESET; }
+    inline bool  was_deep_sleep_timeout() { return deep_sleep_wakeup_reason == ESP_SLEEP_WAKEUP_TIMER; }
+    esp_err_t    prepare_for_deep_sleep();
 };

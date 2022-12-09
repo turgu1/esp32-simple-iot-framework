@@ -1,4 +1,5 @@
 #include <time.h>
+#include <esp_timer.h>
 
 #include "iot.hpp"
 
@@ -18,6 +19,8 @@ RTC_NOINIT_ATTR IoT::State state;
 RTC_NOINIT_ATTR IoT::State return_state;
 RTC_NOINIT_ATTR time_t     next_watchdog_time;
 RTC_NOINIT_ATTR uint32_t   error_count;
+RTC_NOINIT_ATTR uint32_t   send_seq_nbr;
+RTC_NOINIT_ATTR uint32_t   last_duration;
 
 esp_err_t IoT::init(ProcessHandler * handler)
 {
@@ -33,6 +36,8 @@ esp_err_t IoT::init(ProcessHandler * handler)
     state = return_state = STARTUP;
     next_watchdog_time   = now + CONFIG_IOT_WATCHDOG_INTERVAL;
     error_count          = 0;
+    send_seq_nbr         = 0;
+    last_duration        = 0;
   }
   else {
     restart_reason = RestartReason::DEEP_SLEEP_AWAKE;
@@ -111,9 +116,9 @@ void IoT::send_msg(const char * msg_type, const char * other_field)
   static char pkt[248];
 
   snprintf(pkt, 247,
-    "%s;{type:%s,mac:\"%s\",errcnt:%d,rssi:%d,state:%d,return_state:%d,heap:%d%s%s"
+    "%s;{type:%s,seq:%d,dur:%d,mac:\"%s\",errcnt:%d,rssi:%d,st:%d,rst:%d,heap:%d%s%s"
     #ifdef CONFIG_IOT_BATTERY_LEVEL
-      ",vbat:%f"
+      ",vbat:%3.1f"
     #endif
     #ifdef CONFIG_IOT_ENABLE_UDP
       ",ip:\"%s\""
@@ -121,6 +126,8 @@ void IoT::send_msg(const char * msg_type, const char * other_field)
     "}",
     CONFIG_IOT_TOPIC_NAME,
     msg_type,
+    send_seq_nbr,
+    last_duration,
     wifi.get_mac_cstr(),
     error_count,
     wifi.get_rssi(),
@@ -154,6 +161,8 @@ void IoT::send_msg(const char * msg_type, const char * other_field)
       }
     }
   #endif
+
+  send_seq_nbr++;
 }
 
 void IoT::process()
@@ -234,12 +243,14 @@ void IoT::process()
         time_t now = time(&now);
         if ((next_watchdog_time - now) > 0) {
           prepare_for_deep_sleep();
+          last_duration = (int)(esp_timer_get_time() / 1000);
           esp_deep_sleep(((uint64_t)(next_watchdog_time - now)) * 1e6);
         }
       }
       else {
         prepare_for_deep_sleep();
-        esp_deep_sleep(((uint64_t) CONFIG_IOT_WATCHDOG_INTERVAL) * 1e6);
+        last_duration = (int)(esp_timer_get_time() / 1000);
+        esp_deep_sleep(((uint64_t) deep_sleep_duration) * 1e6);
       }
     }
   }
