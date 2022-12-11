@@ -116,15 +116,16 @@ void IoT::send_msg(const char * msg_type, const char * other_field)
   static char pkt[248];
 
   snprintf(pkt, 247,
-    "%s;{type:%s,seq:%d,dur:%d,mac:\"%s\",errcnt:%d,rssi:%d,st:%d,rst:%d,heap:%d%s%s"
+    "%s;{name:%s,type:%s,seq:%d,dur:%d,mac:\"%s\",err:%d,rssi:%d,st:%d,rst:%d,heap:%d%s%s"
     #ifdef CONFIG_IOT_BATTERY_LEVEL
-      ",vbat:%3.1f"
+      ",vbat:%4.2f"
     #endif
     #ifdef CONFIG_IOT_ENABLE_UDP
       ",ip:\"%s\""
     #endif
     "}",
     CONFIG_IOT_TOPIC_NAME,
+    CONFIG_IOT_DEVICE_NAME,
     msg_type,
     send_seq_nbr,
     last_duration,

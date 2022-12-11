@@ -137,7 +137,7 @@ esp_err_t ESPNow::search_ap()
   wifi_ap_record_t * ap_records;
   uint16_t count;
 
-  ESP_LOGD(TAG, "Scanning AP list to find SSID starting with [%s]...", CONFIG_IOT_APSSID_PREFIX);
+  ESP_LOGD(TAG, "Scanning AP list to find SSID starting with [%s]...", CONFIG_IOT_GATEWAY_SSID_PREFIX);
 
   memset(&config, 0, sizeof(wifi_scan_config_t));
   config.channel   = CONFIG_IOT_CHANNEL;
@@ -156,11 +156,11 @@ esp_err_t ESPNow::search_ap()
 
   ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&count, ap_records));
 
-  int len = strlen(CONFIG_IOT_APSSID_PREFIX);
+  int len = strlen(CONFIG_IOT_GATEWAY_SSID_PREFIX);
 
   for (int i = 0; i < count; i++) {
     ESP_LOGD(TAG, "SSID -> %s ...", ap_records[i].ssid);
-    if (strncmp((const char *) ap_records[i].ssid, CONFIG_IOT_APSSID_PREFIX, len) == 0) {
+    if (strncmp((const char *) ap_records[i].ssid, CONFIG_IOT_GATEWAY_SSID_PREFIX, len) == 0) {
       memcpy(&ap_mac_addr, ap_records[i].bssid, sizeof(MacAddr)); 
       wifi.set_rssi(ap_records[i].rssi);
       ESP_LOGD(TAG, "Found AP SSID %s:" MACSTR, ap_records[i].ssid, MAC2STR(ap_mac_addr));

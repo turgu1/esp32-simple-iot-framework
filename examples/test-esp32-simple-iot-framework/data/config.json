@@ -1,0 +1,5 @@
+{
+    "iot_device_name": "TEST",
+    "iot_topic_name": "test",
+    "iot_gateway_ssid_prefix": "RX"
+}

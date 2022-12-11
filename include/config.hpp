@@ -51,3 +51,13 @@ constexpr const esp_log_level_t LOG_LEVEL = ESP_LOG_VERBOSE;
 #elif defined(CONFIG_IOT_WIFI_STA_WEP)
   #define WIFI_STA_AUTH_MODE WIFI_AUTH_WEP_PSK
 #endif
+
+class Config
+{
+  private:
+    static constexpr char const * TAG = "Config Class";
+
+  public:
+    esp_err_t init(bool reset);
+
+};

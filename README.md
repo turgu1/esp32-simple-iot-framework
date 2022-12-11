@@ -37,9 +37,11 @@ The libray's **src/Kconfig** file must be merged in the user application **src/K
 Here is the list of the configuration items:
 
 - **Log Level**: Max log level used by the framework to report various log information on the USB port. The ESP-IDF maximum log level may require to be adjusted according to this item. It can be found in menuconfig at the following location: `Component config → Log output → Maximum log verbosity`.
+- **Device Name**: The device name to be used inside transmitted JSON packets.
 - **MQTT Topic Name**: The topic name that will be used by the gateway to generate the topic to be sent to the MQTT broker.
-- **Transmission Protocol**: The protocol to be used to transmit packets to the ESP32 Gateway. One of **UDP** or **ESP-NOW**.
+- **Enable battery voltage level retrieval**: If enabled, the battery voltage level will be retrieved using the `Battery` class. The code may require some adjustments depending on the electronics.
 - **Interval (in seconds) between Watchdog packet transmission**: The IoT framework is sending a Watchdog packet at the specified interval to signify that the device is still alive. 86400 seconds is one day.
+- **Transmission Protocol**: The protocol to be used to transmit packets to the ESP32 Gateway. One of **UDP** or **ESP-NOW**.
 
 For the UDP Protocol:
 - **UDP Port**: The UDP Port to be used by the exerciser to transmit packets to the gateway.

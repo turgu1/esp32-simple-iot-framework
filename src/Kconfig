@@ -20,6 +20,12 @@ menu "ESP32 Simple IOT Framework"
             bool "Verbose"
     endchoice
     
+    config IOT_DEVICE_NAME
+        string "Device Name"
+        default "UNKNOWN"
+        help
+            Enter the device name to be used inside JSON packets.
+
     config IOT_TOPIC_NAME
         string "MQTT Topic Name"
         default "topic_name"
@@ -91,7 +97,7 @@ menu "ESP32 Simple IOT Framework"
                 Please ensure that the key is in synch with the PMK defined in the
                 gateway.
 
-        config IOT_APSSID_PREFIX
+        config IOT_GATEWAY_SSID_PREFIX
             string "Gateway AP SSID Prefix"
             default "RX"
             help
