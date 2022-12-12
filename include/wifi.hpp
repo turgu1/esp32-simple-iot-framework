@@ -7,6 +7,10 @@
 
 #include "config.hpp"
 
+#define __WIFI__
+#include "global.hpp"
+#undef __WIFI__
+
 class Wifi
 {
   public:

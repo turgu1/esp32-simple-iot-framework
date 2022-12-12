@@ -16,7 +16,7 @@ esp_err_t UDP::init()
 
   esp_err_t status = ESP_OK;
 
-  hostent * h = gethostbyname(CONFIG_IOT_GATEWAY_ADDRESS);
+  hostent * h = gethostbyname(cfg.udp.gateway_address);
   in_addr addr;
 
   int i = 0;
@@ -28,12 +28,12 @@ esp_err_t UDP::init()
   }
 
   if (addr.s_addr == 0) {
-    ESP_LOGE(TAG, "Unable to retrieve IP address of %s.", CONFIG_IOT_GATEWAY_ADDRESS);
+    ESP_LOGE(TAG, "Unable to retrieve IP address of %s.", cfg.udp.gateway_address);
   }
 
   dest_addr.sin_addr.s_addr = addr.s_addr;
   dest_addr.sin_family      = AF_INET;
-  dest_addr.sin_port        = htons(CONFIG_IOT_UDP_PORT);
+  dest_addr.sin_port        = htons(cfg.udp.port);
   
   int addr_family           = AF_INET;
   int ip_protocol           = IPPROTO_IP;
@@ -51,21 +51,28 @@ esp_err_t UDP::send(const uint8_t * data, int len)
 {
   esp_err_t status = ESP_OK;
 
-  static struct {
+  static struct PKT {
     uint16_t crc;
-    char data[CONFIG_IOT_UDP_MAX_PKT_SIZE];
-  } __attribute__((packed)) pkt;
+    char data[0];
+  } __attribute__((packed)) * pkt;
 
 
-  if (len > CONFIG_IOT_UDP_MAX_PKT_SIZE) {
-    ESP_LOGE(TAG, "Cannot send data of length %d, too long. Max is %d.", len, CONFIG_IOT_UDP_MAX_PKT_SIZE);
+  if (len > cfg.udp.max_pkt_size) {
+    ESP_LOGE(TAG, "Cannot send data of length %d, too long. Max is %d.", len, cfg.udp.max_pkt_size);
     status = ESP_FAIL;
   }
   else {
-    memcpy(pkt.data, data, len);
-    pkt.crc = esp_crc16_le(UINT16_MAX, (const uint8_t *)(pkt.data), len);
+    pkt = (PKT *) malloc(len + 2);
+    if (pkt == nullptr) {
+      ESP_LOGE(TAG, "Unable to allocate memory for PKT struct.");
+      return ESP_FAIL;
+    }
+    memcpy(pkt->data, data, len);
+    pkt->crc = esp_crc16_le(UINT16_MAX, (const uint8_t *)(pkt->data), len);
 
-    int err = sendto(sock, (const uint8_t *) &pkt, len + 2, 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
+    int err = sendto(sock, (const uint8_t *) pkt, len + 2, 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
+    free(pkt)
+    
     if (err < 0) {
         ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
         status = ESP_FAIL;

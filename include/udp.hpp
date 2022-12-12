@@ -4,6 +4,10 @@
 
 #ifdef CONFIG_IOT_ENABLE_UDP
 
+#define __UDP__
+#include "global.hpp"
+#undef __UDP__
+
 #include <lwip/sockets.h>
 
 class UDP

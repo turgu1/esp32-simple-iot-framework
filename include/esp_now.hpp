@@ -4,6 +4,10 @@
 
 #ifdef CONFIG_IOT_ENABLE_ESP_NOW
 
+#define __ESP_NOW__
+#include "global.hpp"
+#undef __ESP_NOW__
+
 #include <freertos/FreeRTOS.h>
 #include <esp_now.h>
 

@@ -63,29 +63,30 @@ esp_err_t ESPNow::init()
 
   ESP_ERROR_CHECK(esp_now_init());
   ESP_ERROR_CHECK(esp_now_register_send_cb(send_handler));
-  ESP_ERROR_CHECK(status = esp_now_set_pmk((const uint8_t *) CONFIG_IOT_ESPNOW_PMK));
+  ESP_ERROR_CHECK(status = esp_now_set_pmk((const uint8_t *) cfg.esp_now.primary_master_key));
 
   esp_now_peer_info_t peer;
   memset(&peer, 0, sizeof(esp_now_peer_info_t));
 
   memcpy(peer.peer_addr, ap_mac_addr, 6);
 
-  peer.channel   = CONFIG_IOT_CHANNEL;
+  peer.channel   = cfg.esp_now.channel;
   peer.ifidx     = (wifi_interface_t) ESP_IF_WIFI_STA;
 
-  #ifdef CONFIG_IOT_ENCRYPT
+  if (cfg.esp_now.encryption_enabled) {
     static_assert(sizeof(CONFIG_IOT_ESPNOW_LMK) == 17, "The Exerciser's LMK must be 16 characters long.");
 
     peer.encrypt   = true;
-    memcpy(peer.lmk, CONFIG_IOT_ESPNOW_LMK, ESP_NOW_KEY_LEN);
-  #else
+    memcpy(peer.lmk, cfg.esp_now.local_master_key, ESP_NOW_KEY_LEN);
+  }
+  else {
     peer.encrypt   = false;
-  #endif
+  }
 
   ESP_LOGD(TAG, "AP Peer MAC address: " MACSTR, MAC2STR(peer.peer_addr));
 
   ESP_ERROR_CHECK(status = esp_now_add_peer(&peer));
-  ESP_ERROR_CHECK(esp_wifi_set_channel(CONFIG_IOT_CHANNEL, WIFI_SECOND_CHAN_NONE));
+  ESP_ERROR_CHECK(esp_wifi_set_channel(cfg.esp_now.channel, WIFI_SECOND_CHAN_NONE));
 
   return status;
 }
@@ -106,20 +107,27 @@ void ESPNow::send_handler(const uint8_t * mac_addr, esp_now_send_status_t status
 esp_err_t ESPNow::send(const uint8_t * data, int len)
 {
   esp_err_t status;
-  static struct {
+  static struct PKT {
     uint16_t crc;
-    char data[CONFIG_IOT_ESPNOW_MAX_PKT_SIZE];
-  } __attribute__((packed)) pkt;
+    char data[0];
+  } __attribute__((packed)) * pkt;
 
-  if (len > CONFIG_IOT_ESPNOW_MAX_PKT_SIZE) {
-    ESP_LOGE(TAG, "Cannot send data of length %d, too long. Max is %d.", len, CONFIG_IOT_ESPNOW_MAX_PKT_SIZE);
+  if (len > cfg.esp_now.max_pkt_size) {
+    ESP_LOGE(TAG, "Cannot send data of length %d, too long. Max is %d.", len, cfg.esp_now.max_pkt_size);
     status = ESP_FAIL;
   }
   else {
-    memcpy(pkt.data, data, len);
-    pkt.crc = esp_crc16_le(UINT16_MAX, (uint8_t *)(pkt.data), len);
-
-    if ((status = esp_now_send(ap_mac_addr, (const uint8_t *) &pkt, len+2)) != ESP_OK) {
+    pkt = (PKT *) malloc(len + 2);
+    if (pkt == nullptr) {
+      ESP_LOGE(TAG, "Unable to allocate memory for PKT struct.");
+      return ESP_FAIL;
+    }
+    memcpy(pkt->data, data, len);
+    pkt->crc = esp_crc16_le(UINT16_MAX, (uint8_t *)(pkt->data), len);
+    status = esp_now_send(ap_mac_addr, (const uint8_t *) pkt, len+2);
+    free(pkt);
+    
+    if (status != ESP_OK) {
       ESP_LOGE(TAG, "Unable to send ESP-NOW packet: %s.", esp_err_to_name(status));
       uint8_t primary_channel;
       wifi_second_chan_t secondary_channel;
@@ -137,10 +145,10 @@ esp_err_t ESPNow::search_ap()
   wifi_ap_record_t * ap_records;
   uint16_t count;
 
-  ESP_LOGD(TAG, "Scanning AP list to find SSID starting with [%s]...", CONFIG_IOT_GATEWAY_SSID_PREFIX);
+  ESP_LOGD(TAG, "Scanning AP list to find SSID starting with [%s]...", cfg.esp_now.gateway_ssid_prefix);
 
   memset(&config, 0, sizeof(wifi_scan_config_t));
-  config.channel   = CONFIG_IOT_CHANNEL;
+  config.channel   = cfg.esp_now.channel;
   config.scan_type = WIFI_SCAN_TYPE_ACTIVE;
 
   ESP_ERROR_CHECK(esp_wifi_scan_start(&config, true));
@@ -156,11 +164,11 @@ esp_err_t ESPNow::search_ap()
 
   ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&count, ap_records));
 
-  int len = strlen(CONFIG_IOT_GATEWAY_SSID_PREFIX);
+  int len = strlen(cfg.esp_now.gateway_ssid_prefix);
 
   for (int i = 0; i < count; i++) {
     ESP_LOGD(TAG, "SSID -> %s ...", ap_records[i].ssid);
-    if (strncmp((const char *) ap_records[i].ssid, CONFIG_IOT_GATEWAY_SSID_PREFIX, len) == 0) {
+    if (strncmp((const char *) ap_records[i].ssid, cfg.esp_now.gateway_ssid_prefix, len) == 0) {
       memcpy(&ap_mac_addr, ap_records[i].bssid, sizeof(MacAddr)); 
       wifi.set_rssi(ap_records[i].rssi);
       ESP_LOGD(TAG, "Found AP SSID %s:" MACSTR, ap_records[i].ssid, MAC2STR(ap_mac_addr));

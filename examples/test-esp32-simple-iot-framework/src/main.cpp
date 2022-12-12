@@ -9,7 +9,7 @@ App app;
 
 extern "C" {
   void app_main() {
-    esp_log_level_set(TAG, cfg.log_level);
+    esp_log_level_set(TAG, CONFIG_IOT_LOG_LEVEL);
 
     if (app.init() != ESP_OK) {
       ESP_LOGE(TAG, "Main App Initialization failed...");

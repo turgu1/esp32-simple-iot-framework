@@ -196,19 +196,19 @@ esp_err_t Wifi::init()
 {
   #ifdef CONFIG_IOT_ENABLE_ESP_NOW
 
-    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+    wifi_init_config_t init_cfg = WIFI_INIT_CONFIG_DEFAULT();
 
     ESP_ERROR_CHECK(esp_netif_init());
-    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+    ESP_ERROR_CHECK(esp_wifi_init(&init_cfg));
     ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_start());
 
-    #if CONFIG_IOT_ESPNOW_ENABLE_LONG_RANGE
+    if (cfg.esp_now.enable_long_range) {
       ESP_ERROR_CHECK(esp_wifi_set_protocol(
         (wifi_interface_t) ESP_IF_WIFI_STA, 
         WIFI_PROTOCOL_11B|WIFI_PROTOCOL_11G|WIFI_PROTOCOL_11N|WIFI_PROTOCOL_LR));
-    #endif
+    }
 
     return ESP_OK;
 
@@ -231,8 +231,8 @@ esp_err_t Wifi::init()
     ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
 
-    memcpy(wifi_sta_cfg.sta.ssid,     CONFIG_IOT_WIFI_UDP_STA_SSID, std::min(strlen(CONFIG_IOT_WIFI_UDP_STA_SSID),     sizeof(wifi_sta_cfg.sta.ssid)));
-    memcpy(wifi_sta_cfg.sta.password, CONFIG_IOT_WIFI_UDP_STA_PASS, std::min(strlen(CONFIG_IOT_WIFI_UDP_STA_PASS), sizeof(wifi_sta_cfg.sta.password)));
+    memcpy(wifi_sta_cfg.sta.ssid,     cfg.udp.wifi_ssid, std::min(strlen(cfg.udp.wifi_ssid), sizeof(wifi_sta_cfg.sta.ssid)));
+    memcpy(wifi_sta_cfg.sta.password, cfg.udp.wifi_psw,  std::min(strlen(cfg.udp.wifi_psw),  sizeof(wifi_sta_cfg.sta.password)));
     wifi_sta_cfg.sta.threshold.authmode = WIFI_STA_AUTH_MODE;
     wifi_sta_cfg.sta.pmf_cfg.capable    = true;
     wifi_sta_cfg.sta.pmf_cfg.required   = false;

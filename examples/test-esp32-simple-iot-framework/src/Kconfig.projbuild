@@ -32,7 +32,7 @@ menu "ESP32 Simple IOT Framework Test"
         help
             Enter the topic name that will be used by the gateway to
             generate the complete topic name to be sent to the MQTT broker.
-
+    
     config IOT_BATTERY_LEVEL
         bool "Enable battery voltage level retrieval"
         default "n"
@@ -85,9 +85,24 @@ menu "ESP32 Simple IOT Framework Test"
             help
                 Enter the Gateway address. It can be entered as a standard IPv4
                 dotted decimal notation (xx.xx.xx.xx) or as a DNS name.
+
+        config IOT_WIFI_UDP_STA_SSID
+            string "Wifi Router SSID"
+            default "your_wifi_router_ssid"
+            help
+                Wifi SSID as defined in your router.
+
+        config IOT_WIFI_UDP_STA_PASS
+            string "Wifi Router Password"
+            default "your_wifi_router_password"
+            help
+                Wifi Password as defined in your router.
+                Can be empty.
+
     endmenu
 
     menu "ESP-NOW Protocol"
+        depends on IOT_ENABLE_ESP_NOW
         config IOT_ESPNOW_PMK
             string "ESP-NOW primary master key"
             default "pmk1234567890123"
@@ -97,6 +112,14 @@ menu "ESP32 Simple IOT Framework Test"
                 Please ensure that the key is in synch with the PMK defined in the
                 gateway.
 
+        config IOT_ESPNOW_LMK
+            string "ESP-NOW local master key"
+            default "lmk1234567890123"
+            help
+                ESP-NOW local master key (LMK) for the exerciser
+                to use. The length of LMK must be 16 characters.
+                Please ensure that the key reflects the gateway configuration.
+                
         config IOT_GATEWAY_SSID_PREFIX
             string "Gateway AP SSID Prefix"
             default "RX"
@@ -111,15 +134,6 @@ menu "ESP32 Simple IOT Framework Test"
             help
                 Set if this device is using packet encryption. If set, the gateway
                 internal table of encrypted devices must be modified accordingly.
-
-        config IOT_ESPNOW_LMK
-            depends on IOT_ENCRYPT
-            string "ESP-NOW local master key"
-            default "lmk1234567890123"
-            help
-                ESP-NOW local master key (LMK) for the exerciser
-                to use. The length of LMK must be 16 characters.
-                Please ensure that the key reflects the gateway configuration.
 
         config IOT_CHANNEL
             int "Channel"
@@ -148,38 +162,7 @@ menu "ESP32 Simple IOT Framework Test"
     endmenu
 
     menu "Wifi"
-        config IOT_WIFI_ESP_NOW_STA_SSID
-            depends on IOT_ENABLE_ESP_NOW
-            string "Wifi Gateway SSID"
-            default "your_wifi_gateway_ssid"
-            help
-                SSID associated with Wifi as defined in your gateway. Will be used 
-                to find the gateway MAC address when unknown. 
-
-        config IOT_WIFI_ESP_NOW_STA_PASS
-            depends on IOT_ENABLE_ESP_NOW
-            string "Wifi Gateway Password"
-            default "your_wifi_gateway_password"
-            help
-                Password associated with Wifi as defined in your gateway.
-                Can be empty.
-
-        config IOT_WIFI_UDP_STA_SSID
-            depends on IOT_ENABLE_UDP
-            string "Wifi Router SSID"
-            default "your_wifi_router_ssid"
-            help
-                Wifi SSID as defined in your router.
-
-        config IOT_WIFI_UDP_STA_PASS
-            depends on IOT_ENABLE_UDP
-            string "Wifi Router Password"
-            default "your_wifi_router_password"
-            help
-                Wifi Password as defined in your router.
-                Can be empty.
-
-        choice
+       choice
             prompt "Wifi Gateway Authorization Mode"
             default IOT_WIFI_STA_WPA2
             help

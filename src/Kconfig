@@ -112,6 +112,14 @@ menu "ESP32 Simple IOT Framework"
                 Please ensure that the key is in synch with the PMK defined in the
                 gateway.
 
+        config IOT_ESPNOW_LMK
+            string "ESP-NOW local master key"
+            default "lmk1234567890123"
+            help
+                ESP-NOW local master key (LMK) for the exerciser
+                to use. The length of LMK must be 16 characters.
+                Please ensure that the key reflects the gateway configuration.
+                
         config IOT_GATEWAY_SSID_PREFIX
             string "Gateway AP SSID Prefix"
             default "RX"
@@ -126,15 +134,6 @@ menu "ESP32 Simple IOT Framework"
             help
                 Set if this device is using packet encryption. If set, the gateway
                 internal table of encrypted devices must be modified accordingly.
-
-        config IOT_ESPNOW_LMK
-            depends on IOT_ENCRYPT
-            string "ESP-NOW local master key"
-            default "lmk1234567890123"
-            help
-                ESP-NOW local master key (LMK) for the exerciser
-                to use. The length of LMK must be 16 characters.
-                Please ensure that the key reflects the gateway configuration.
 
         config IOT_CHANNEL
             int "Channel"

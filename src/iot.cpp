@@ -33,7 +33,7 @@ esp_err_t IoT::init(ProcessHandler * handler)
     restart_reason       = RestartReason::RESET;
     time_t now           = time(&now);
     state = return_state = STARTUP;
-    next_watchdog_time   = now + CONFIG_IOT_WATCHDOG_INTERVAL;
+    next_watchdog_time   = now + cfg.watchdog_interval;
     error_count          = 0;
     send_seq_nbr         = 0;
     last_duration        = 0;
@@ -126,8 +126,8 @@ void IoT::send_msg(const char * msg_type, const char * other_field)
       ",ip:\"%s\""
     #endif
     "}",
-    CONFIG_IOT_TOPIC_NAME,
-    CONFIG_IOT_DEVICE_NAME,
+    cfg.topic_name,
+    cfg.device_name,
     msg_type,
     send_seq_nbr,
     last_duration,
@@ -188,7 +188,7 @@ void IoT::process()
     case State::WATCHDOG: {
         send_msg("WATCHDOG");
         time_t now;
-        next_watchdog_time = time(&now) + CONFIG_IOT_WATCHDOG_INTERVAL;
+        next_watchdog_time = time(&now) + cfg.watchdog_interval;
         new_state = new_return_state;
       }
       break;

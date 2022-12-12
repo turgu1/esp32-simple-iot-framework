@@ -6,7 +6,6 @@
 
 #define __IOT__
 #include "global.hpp"
-
 #undef __IOT__
 
 extern uint32_t error_count;
