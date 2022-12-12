@@ -17,7 +17,7 @@ int8_t        Wifi::rssi                    = 0;
 
 Wifi::Wifi(void)
 {
-  esp_log_level_set(TAG, CONFIG_IOT_LOG_LEVEL);
+  esp_log_level_set(TAG, cfg.log_level);
 
   if (retrieve_mac() != ESP_OK) {
     ESP_LOGE(TAG, "Unable to retrieve Mac Adress.");

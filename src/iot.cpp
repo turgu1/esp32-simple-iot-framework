@@ -24,15 +24,14 @@ RTC_NOINIT_ATTR uint32_t   last_duration;
 
 esp_err_t IoT::init(ProcessHandler * handler)
 {
-  esp_log_level_set(TAG, CONFIG_IOT_LOG_LEVEL);
-
   process_handler           = handler;
   deep_sleep_duration       = 0;
   esp_reset_reason_t reason = esp_reset_reason();
 
   if (reason != ESP_RST_DEEPSLEEP) {
-    restart_reason = RestartReason::RESET;
-    time_t now = time(&now);
+    if (!config.init(true)) return ESP_FAIL;
+    restart_reason       = RestartReason::RESET;
+    time_t now           = time(&now);
     state = return_state = STARTUP;
     next_watchdog_time   = now + CONFIG_IOT_WATCHDOG_INTERVAL;
     error_count          = 0;
@@ -40,9 +39,12 @@ esp_err_t IoT::init(ProcessHandler * handler)
     last_duration        = 0;
   }
   else {
+    if (!config.init(false)) return ESP_FAIL;
     restart_reason = RestartReason::DEEP_SLEEP_AWAKE;
     deep_sleep_wakeup_reason = esp_sleep_get_wakeup_cause();
   }
+
+  esp_log_level_set(TAG, cfg.log_level);
 
   ESP_ERROR_CHECK(nvs_mgr.init());
   ESP_ERROR_CHECK(esp_event_loop_create_default());

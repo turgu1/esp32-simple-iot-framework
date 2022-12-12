@@ -4,7 +4,7 @@
 
 esp_err_t Battery::init()
 {
-  esp_log_level_set(TAG, CONFIG_IOT_LOG_LEVEL);
+  esp_log_level_set(TAG, cfg.log_level);
 
   gpio_set_direction(VOLTAGE_ENABLE, GPIO_MODE_OUTPUT);
   gpio_set_level(VOLTAGE_ENABLE, 0);

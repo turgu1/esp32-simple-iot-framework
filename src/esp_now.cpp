@@ -30,7 +30,7 @@ esp_err_t ESPNow::init()
 {
   esp_err_t status;
 
-  esp_log_level_set(TAG, CONFIG_IOT_LOG_LEVEL);
+  esp_log_level_set(TAG, cfg.log_level);
 
   send_queue_handle = xQueueCreate(5, sizeof(send_event));
   if (send_queue_handle == nullptr) {

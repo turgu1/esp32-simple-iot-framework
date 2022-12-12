@@ -12,7 +12,7 @@
 
 esp_err_t UDP::init()
 {
-  esp_log_level_set(TAG, CONFIG_IOT_LOG_LEVEL);
+  esp_log_level_set(TAG, cfg.log_level);
 
   esp_err_t status = ESP_OK;
 

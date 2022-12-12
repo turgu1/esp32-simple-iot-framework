@@ -19,6 +19,9 @@
 #endif
 
 #ifndef __GLOBAL__
+  extern CFG cfg;
+  extern Config config;
+  
   #ifndef __IOT__
     extern IoT iot;
   #endif

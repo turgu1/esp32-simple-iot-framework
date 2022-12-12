@@ -1,0 +1,22 @@
+{
+  "log_level": 2,
+  "device_name": "UNKNOWN",
+  "topic_name": "unknown",
+  "watchdog_interval": 84600,
+  "udp": {
+    "port": 3333,
+    "max_pkt_size": 200,
+    "gateway_address": "0.0.0.0",
+    "wifi_ssid": "router_ssid",
+    "wifi_psw": "router_password"
+  },
+  "esp_now": {
+    "primary_master_key": "pmk0123456789012",
+    "gateway_ssid_prefix": "GTW",
+    "encryption_enabled": 0,
+    "local_master_key": "lmk0123456789012",
+    "channel": 6,
+    "max_pkt_size": 200,
+    "enable_long_range": 0
+  }
+}

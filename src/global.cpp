@@ -3,6 +3,9 @@
 
 #include "global.hpp"
 
+RTC_NOINIT_ATTR CFG cfg;
+
+Config config;
 IoT    iot;
 Wifi   wifi;
 NVSMgr nvs_mgr;
