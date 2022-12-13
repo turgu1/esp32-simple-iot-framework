@@ -29,7 +29,7 @@ esp_err_t IoT::init(ProcessHandler * handler)
   esp_reset_reason_t reason = esp_reset_reason();
 
   if (reason != ESP_RST_DEEPSLEEP) {
-    if (!config.init(true)) return ESP_FAIL;
+    if (config.init(true) != ESP_OK) return ESP_FAIL;
     restart_reason       = RestartReason::RESET;
     time_t now           = time(&now);
     state = return_state = STARTUP;
@@ -39,7 +39,7 @@ esp_err_t IoT::init(ProcessHandler * handler)
     last_duration        = 0;
   }
   else {
-    if (!config.init(false)) return ESP_FAIL;
+    if (config.init(false) != ESP_OK) return ESP_FAIL;
     restart_reason = RestartReason::DEEP_SLEEP_AWAKE;
     deep_sleep_wakeup_reason = esp_sleep_get_wakeup_cause();
   }

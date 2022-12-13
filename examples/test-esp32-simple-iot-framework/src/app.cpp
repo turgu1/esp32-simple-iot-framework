@@ -90,7 +90,10 @@ void App::task(void * param)
 
 esp_err_t App::init()
 {
-  iot.init(&iot_handler);
+  if (iot.init(&iot_handler) != ESP_OK) {
+    ESP_LOGE(TAG, "Unable to start the IOT Framework properly.");
+    return ESP_FAIL;
+  }
 
   if (xTaskCreate(task, "main_task", 4*4096, nullptr, 5, &task_handle) != pdPASS) {
     ESP_LOGE(TAG, "Unable to create main_task.");

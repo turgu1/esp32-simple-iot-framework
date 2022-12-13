@@ -2,6 +2,10 @@
 
 #ifdef CONFIG_IOT_BATTERY_LEVEL
 
+#define __BATTERY__
+#include "global.hpp"
+#undef __BATTERY__
+
 esp_err_t Battery::init()
 {
   esp_log_level_set(TAG, cfg.log_level);

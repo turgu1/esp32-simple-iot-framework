@@ -30,6 +30,9 @@ long Config::get_val(const char * sub, const char * name, long default_value, lo
       if ((v >= min) && (v <= max)) val = v;
     }
   }
+  
+  ESP_LOGD(TAG, "===> get_val: %s %s (%ld): %ld", sub, name, default_value, val);
+
   return val;
 }
 
@@ -67,6 +70,8 @@ void Config::get_str(char * loc, const char * sub, const char * name, const char
     strncpy(loc, default_value, len);
     loc[max_length] = 0;
   }
+
+  ESP_LOGD(TAG, "===> get_str: %s %s (%s): %s", sub, name, default_value, loc);
 }
 
 esp_err_t Config::retrieve_cfg()
@@ -94,6 +99,8 @@ esp_err_t Config::retrieve_cfg()
 
   if (stat("/spiffs/config.json", &st) == 0) {
 
+    ESP_LOGD(TAG, "Config file size: %d", (int) st.st_size);
+    
     FILE * f = fopen("/spiffs/config.json", "r");
     if (f == nullptr) {
       ESP_LOGE(TAG, "Failed to open /spiffs/config.json file for reading");
@@ -101,7 +108,7 @@ esp_err_t Config::retrieve_cfg()
       return ESP_FAIL;
     }
 
-    char * cfg_file_content = (char *) malloc(st.st_size + 1);
+    char * cfg_file_content = (char *) malloc((size_t)(st.st_size + 1));
 
     if (cfg_file_content == nullptr) {
       ESP_LOGE(TAG, "Unable to allocate space for config file.");
@@ -110,8 +117,9 @@ esp_err_t Config::retrieve_cfg()
       return ESP_FAIL;
     }
 
-    if (fread(cfg_file_content, st.st_size, 1, f) != st.st_size) {
-      ESP_LOGE(TAG, "Unable to read config file content.");
+    int size = fread(cfg_file_content, (size_t) st.st_size, 1, f);
+    if (size != ((size_t) st.st_size)) {
+      ESP_LOGE(TAG, "Unable to read config file content (%d).", size);
       fclose(f);
       esp_vfs_spiffs_unregister("spiffs");
       free(cfg_file_content);
