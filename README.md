@@ -10,7 +10,7 @@ This library implements a small, minimally secure, IOT Framework for embedded ES
 
 This framework requires the use of a **ESP32 Gateway** using the software v0.3.0 available [here](https://github.com/turgu1/esp32-gateway). 
 
-The targetted application must also integrate the LittleFS library as a component, as demonstrated in the examples folder. It can be found [here](). The following commands can be done from the application main folder to integrate it. These commands will retrieve the littlefs project in the the components folder, then compile the mklittlefs application and move it to the main application folder (the gcc/g++ compiler and make app must be already available on the computer):
+The targetted application must also integrate the LittleFS library as a component, as demonstrated in the examples folder. It can be found [here](https://github.com/joltwallet/esp_littlefs). The following commands can be done from the application main folder to integrate it. These commands will retrieve the littlefs project in the the components folder, then compile the mklittlefs application and move it to the main application folder (the gcc/g++ compiler and make app must be already available on the computer):
 
 ```
 $ mkdir components
