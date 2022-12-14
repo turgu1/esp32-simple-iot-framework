@@ -8,7 +8,22 @@ This is a simple ESP32 Internet of Things framework.
 
 This library implements a small, minimally secure, IOT Framework for embedded ESP32 devices to serve into a Home IOT environment. It diminishes the amount of code to be put in the targeted application source code. The application interacts with the framework through a Finite State Machine allowing for specific usage at every stage.
 
-This framework requires the use of a **ESP32 Gateway** using the software v0.3.0 available [here](https://github.com/turgu1/esp32-gateway).
+This framework requires the use of a **ESP32 Gateway** using the software v0.3.0 available [here](https://github.com/turgu1/esp32-gateway). 
+
+The targetted application must also integrate the LittleFS library as a component, as demonstrated in the examples folder. It can be found [here](). The following commands can be done from the application main folder to integrate it. These commands will retrieve the littlefs project in the the components folder, then compile the mklittlefs application and move it to the main application folder (the gcc/g++ compiler and make app must be already available on the computer):
+
+```
+$ mkdir components
+$ cd components
+$ git clone https://github.com/joltwallet/esp_littlefs.git
+$ cd esp_littlefs
+$ git submodule update --init --recursive
+$ cd mklittlefs
+$ make
+$ chmod 755 mklittlefs
+$ mv mklittlefs ../..
+cd ../..
+```
 
 The framework is to be used with the PlarformIO ecosystem. Some examples can be found in the examples folder and shall be compiled through PlatformIO.
 
