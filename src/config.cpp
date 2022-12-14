@@ -2,7 +2,7 @@
 #include <cJSON.h>
 #include <sys/stat.h>
 #include <esp_crc.h>
-#include <esp_spiffs.h>
+#include <esp_littlefs.h>
 
 #include "config.hpp"
 #include "global.hpp"
@@ -19,7 +19,15 @@ long Config::get_val(const char * sub, const char * name, long default_value, lo
       cJSON * elem = cJSON_GetObjectItem(sub_obj, name);
       if ((elem != nullptr) && (elem->type == cJSON_Number)) {
         long v = elem->valuedouble;
-        if ((v >= min) && (v <= max)) val = v;
+        if ((v >= min) && (v <= max)) {
+          val = v;
+        }
+        else {
+          ESP_LOGW(TAG, "===> get_val value %ld is not inside limits [%ld, %ld]: %s %s", v, min, max, sub, name);
+        }
+      }
+      else {
+        ESP_LOGW(TAG, "===> get_val item %s %s not found.", sub, name);
       }
     }
   }
@@ -27,7 +35,15 @@ long Config::get_val(const char * sub, const char * name, long default_value, lo
     cJSON * elem = cJSON_GetObjectItem(root, name);
     if ((elem != nullptr) && (elem->type == cJSON_Number)) {
       long v = elem->valuedouble;
-      if ((v >= min) && (v <= max)) val = v;
+      if ((v >= min) && (v <= max)) {
+        val = v;
+      }
+      else {
+        ESP_LOGW(TAG, "===> get_val value %ld is not inside limits [%ld, %ld]: %s %s", v, min, max, sub, name);
+      }
+    }
+    else {
+      ESP_LOGW(TAG, "===> get_val item %s %s not found.", sub, name);
     }
   }
   
@@ -65,6 +81,7 @@ void Config::get_str(char * loc, const char * sub, const char * name, const char
   }
 
   if (loc[0] == 0) {
+    ESP_LOGW(TAG, "===> get_str item %s %s not found.", sub, name);
     int len = strlen(default_value);
     if (len > max_length) len = max_length;
     strncpy(loc, default_value, len);
@@ -76,35 +93,35 @@ void Config::get_str(char * loc, const char * sub, const char * name, const char
 
 esp_err_t Config::retrieve_cfg()
 {
-  esp_vfs_spiffs_conf_t conf = {
-    .base_path = "/spiffs",
-    .partition_label = "spiffs",
-    .max_files = 5,
-    .format_if_mount_failed = false
+  esp_vfs_littlefs_conf_t conf = {
+    .base_path = "/littlefs",
+    .partition_label = "littlefs",
+    .format_if_mount_failed = false,
+    .dont_mount = false
   };
 
-  esp_err_t ret = esp_vfs_spiffs_register(&conf);
+  esp_err_t ret = esp_vfs_littlefs_register(&conf);
 
   if (ret != ESP_OK) {
     if (ret == ESP_FAIL) {
-      ESP_LOGE(TAG, "Failed to mount SPIFFS filesystem or wrong format.");
+      ESP_LOGE(TAG, "Failed to mount LittleFS filesystem or wrong format.");
     } 
     else {
-      ESP_LOGE(TAG, "Failed to find SPIFFS partition.");
+      ESP_LOGE(TAG, "Failed to find LittleFS partition.");
     } 
     return ESP_FAIL;
   }
 
   struct stat st;
 
-  if (stat("/spiffs/config.json", &st) == 0) {
+  if (stat("/littlefs/config.json", &st) == 0) {
 
     ESP_LOGD(TAG, "Config file size: %d", (int) st.st_size);
     
-    FILE * f = fopen("/spiffs/config.json", "r");
+    FILE * f = fopen("/littlefs/config.json", "r");
     if (f == nullptr) {
-      ESP_LOGE(TAG, "Failed to open /spiffs/config.json file for reading");
-      esp_vfs_spiffs_unregister("spiffs");
+      ESP_LOGE(TAG, "Failed to open /littlefs/config.json file for reading");
+      esp_vfs_littlefs_unregister("littlefs");
       return ESP_FAIL;
     }
 
@@ -113,21 +130,21 @@ esp_err_t Config::retrieve_cfg()
     if (cfg_file_content == nullptr) {
       ESP_LOGE(TAG, "Unable to allocate space for config file.");
       fclose(f);
-      esp_vfs_spiffs_unregister("spiffs");
+      esp_vfs_littlefs_unregister("littlefs");
       return ESP_FAIL;
     }
 
-    int size = fread(cfg_file_content, (size_t) st.st_size, 1, f);
+    int size = fread(cfg_file_content, 1, (size_t) st.st_size, f);
     if (size != ((size_t) st.st_size)) {
       ESP_LOGE(TAG, "Unable to read config file content (%d).", size);
       fclose(f);
-      esp_vfs_spiffs_unregister("spiffs");
+      esp_vfs_littlefs_unregister("littlefs");
       free(cfg_file_content);
       return ESP_FAIL;
     }
 
     fclose(f);
-    esp_vfs_spiffs_unregister("spiffs");
+    esp_vfs_littlefs_unregister("littlefs");
 
     cfg_file_content[st.st_size] = 0;
     root = cJSON_Parse(cfg_file_content);
@@ -142,7 +159,7 @@ esp_err_t Config::retrieve_cfg()
 
     cfg.log_level         = (esp_log_level_t) get_val("", "log_level",   CONFIG_IOT_LOG_LEVEL,          0,     5);
     esp_log_level_set(TAG, cfg.log_level);
-    cfg.watchdog_interval = get_val(                 "", "log_level",   CONFIG_IOT_WATCHDOG_INTERVAL, 60, 84600);
+    cfg.watchdog_interval = get_val(                 "", "watchdog_interval", CONFIG_IOT_WATCHDOG_INTERVAL, 60, 84600);
                             get_str(cfg.device_name, "", "device_name", CONFIG_IOT_DEVICE_NAME,              32);
                             get_str(cfg.topic_name,  "", "topic_name",  CONFIG_IOT_TOPIC_NAME,               32);
 
@@ -154,14 +171,24 @@ esp_err_t Config::retrieve_cfg()
                                 get_str(cfg.udp.wifi_psw,       "udp", "wifi_psw",        CONFIG_IOT_WIFI_UDP_STA_PASS,      32);
     #endif
 
-    #ifdef CONFIG_IOT_ENBLE_ESP_NOW
-      cfg.esp_now.encryption_enabled = get_val(                                 "esp_now", "encryption_enabled",  CONFIG_IOT_ENCRYPT,                  0,   1);
-      cfg.esp_now.channel            = get_val(                                 "esp_now", "channel",             CONFIG_IOT_CHANNEL,                  0,  11);
-      cfg.esp_now.max_pkt_size       = get_val(                                 "esp_now", "max_pkt_size",        CONFIG_IOT_ESPNOW_MAX_PKT_SIZE,      1, 248);
-      cfg.esp_now.enable_long_range  = get_val(                                 "esp_now", "enable_long_range",   CONFIG_IOT_ESPNOW_ENABLE_LONG_RANGE, 0,   1);
-                                       get_str(cfg.esp_now.primary_master_key,  "esp_now", "primary_master_key",  CONFIG_IOT_ESPNOW_PMK,                   16);
-                                       get_str(cfg.esp_now.local_master_key,    "esp_now", "local_master_key",    CONFIG_IOT_ESPNOW_LMK,                   16);
-                                       get_str(cfg.esp_now.gateway_ssid_prefix, "esp_now", "gateway_ssid_prefix", CONFIG_IOT_GATEWAY_SSID_PREFIX,          16);
+    #ifdef CONFIG_IOT_ENABLE_ESP_NOW
+      #ifdef CONFIG_IOT_ENCRYPT
+        #define ENCRYPT 1
+      #else
+        #define ENCRYPT 0
+      #endif
+      #ifdef CONFIG_IOT_ESPNOW_ENABLE_LONG_RANGE
+        #define LONG_RANGE 1
+      #else
+        #define LONG_RANGE 0
+      #endif
+      cfg.esp_now.encryption_enabled = get_val(                                 "esp_now", "encryption_enabled",  ENCRYPT,                        0,   1);
+      cfg.esp_now.channel            = get_val(                                 "esp_now", "channel",             CONFIG_IOT_CHANNEL,             0,  11);
+      cfg.esp_now.max_pkt_size       = get_val(                                 "esp_now", "max_pkt_size",        CONFIG_IOT_ESPNOW_MAX_PKT_SIZE, 1, 248);
+      cfg.esp_now.enable_long_range  = get_val(                                 "esp_now", "enable_long_range",   LONG_RANGE,                     0,   1);
+                                       get_str(cfg.esp_now.primary_master_key,  "esp_now", "primary_master_key",  CONFIG_IOT_ESPNOW_PMK,              16);
+                                       get_str(cfg.esp_now.local_master_key,    "esp_now", "local_master_key",    CONFIG_IOT_ESPNOW_LMK,              16);
+                                       get_str(cfg.esp_now.gateway_ssid_prefix, "esp_now", "gateway_ssid_prefix", CONFIG_IOT_GATEWAY_SSID_PREFIX,     16);
     #endif
 
     cfg.crc = esp_crc16_le(UINT16_MAX, (const uint8_t *)(&cfg), sizeof(CFG) - 2);
@@ -169,8 +196,8 @@ esp_err_t Config::retrieve_cfg()
     free(cfg_file_content);
   }
   else {
-    ESP_LOGE(TAG, "Config file /spiffs/config.json not found!");
-    esp_vfs_spiffs_unregister("spiffs");
+    ESP_LOGE(TAG, "Config file /littlefs/config.json not found!");
+    esp_vfs_littlefs_unregister("littlefs");
     return ESP_FAIL;
   }
     
